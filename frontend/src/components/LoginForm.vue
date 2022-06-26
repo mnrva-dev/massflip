@@ -198,4 +198,9 @@ function login(e) {
     .badInput {
         border: 2px solid red;
     }
+    @media (max-aspect-ratio:13/16) {
+        #LoginContainer {
+            width: 80%;
+        }
+    }
 </style>

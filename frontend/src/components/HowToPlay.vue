@@ -57,4 +57,10 @@ defineEmits(['display'])
         background-clip: text;
         color: transparent;
     }
+    
+    @media (max-aspect-ratio:13/16) {
+        #HowTo {
+            width: 80%;
+        }
+    }
 </style>

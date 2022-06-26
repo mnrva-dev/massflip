@@ -160,4 +160,23 @@ function sendChat() {
     #ChatInput:focus {
         outline: none !important;
     }
+    
+    @media (max-aspect-ratio:13/16) {
+        #ChatBoxContainer {
+            width:80%;
+            max-width: 80%;
+            margin: auto;
+            margin-bottom: 30px;
+        }
+        #ChatWindow {
+            width:95%;
+        }
+        #ChatInput {
+            width: 65%;
+        }
+        #ChatInputContainer {
+            width: 95%;
+            margin: auto;
+        }
+    }
 </style>

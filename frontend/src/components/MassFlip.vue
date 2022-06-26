@@ -32,22 +32,29 @@ function displayHandle(c) {
 
 <style scoped>
 #Container {
-  width: 1000px;
-  max-width: 100%;
-  height: 75vh;
-  border-radius: 30px;
-  margin: auto;
-  color: #f3f9f8;
-  background-color: #001d3d;
-  position: relative;
+    width: 1000px;
+    max-width: 100%;
+    height: 75vh;
+    border-radius: 30px;
+    margin: auto;
+    color: #f3f9f8;
+    background-color: #001d3d;
+    position: relative;
 }
 .dullBG {
-  height: 100%;
-  width: 100%;
-  position: absolute;
-  top: 0px;
-  left: 0px;
-  border-radius: 30px;
-  background-color: rgba(0, 8, 20,0.7);
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    border-radius: 30px;
+    background-color: rgba(0, 8, 20,0.7);
+}
+    
+@media (max-aspect-ratio:13/16) {
+    #Container {
+        width: 95%;
+        height: auto;
+    }
 }
 </style>

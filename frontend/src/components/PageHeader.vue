@@ -64,4 +64,10 @@ function logout() {
         cursor: pointer;
         color: #bbb;
     }
+    @media (max-aspect-ratio:13/16) {
+        nav {
+            max-width: 80%;
+
+        }
+    }
 </style>

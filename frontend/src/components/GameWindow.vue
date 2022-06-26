@@ -15,4 +15,9 @@
         display: flex;
         justify-content: space-around;
     }
+    @media (max-aspect-ratio:13/16) {
+        #GameWindow {
+            flex-direction: column;
+        }
+    }
 </style>

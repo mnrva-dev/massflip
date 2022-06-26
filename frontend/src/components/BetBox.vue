@@ -129,6 +129,11 @@ onMounted(() => {
 #lower {
     height: 200px;
 }
+@media (max-aspect-ratio:13/16) {
+    #GameWindow {
+        flex-direction: row;
+    }
+}
 
 @property --p{
   syntax: '<number>';
