@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"golang.org/x/time/rate"
 )
 
 // code adapted from the gorilla websocket chat demo code
@@ -49,6 +50,8 @@ type Client struct {
 	username string
 
 	auth bool
+
+	limiter rate.Limiter
 }
 
 type Auth struct {
@@ -70,6 +73,7 @@ func (c *Client) readPump() {
 	c.conn.SetReadLimit(maxMessageSize)
 	c.conn.SetReadDeadline(time.Now().Add(pongWait))
 	c.conn.SetPongHandler(func(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
+	c.limiter = *rate.NewLimiter(1, 5)
 	for {
 		_, message, err := c.conn.ReadMessage()
 		if err != nil {
@@ -77,6 +81,10 @@ func (c *Client) readPump() {
 				log.Printf("error: %v", err)
 			}
 			break
+		}
+		if !c.limiter.Allow() {
+			c.send <- []byte("{\"type\":\"chaterror\",\"error\":\"You are sending messages too quickly\"}")
+			continue
 		}
 		var v Auth
 		err = json.Unmarshal(message, &v)

@@ -6,7 +6,7 @@ module.exports = defineConfig({
 module.exports = {
   devServer: {
     host: "localhost",
-    port: 8000,
+    port: 8080,
     proxy: {
       "/": {
         target: "http://localhost:8000",

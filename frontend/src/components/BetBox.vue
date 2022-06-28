@@ -5,13 +5,15 @@
             <div id="until">{{ until }}</div>
         </div>
         <div id="BetGraph">
-            <div class="pie animate pie-base" :style="tailsStyle"></div>
-            <div class="pie animate start-no-round pie-overlap" :style="headsStyle"></div>
+            <div class="spin">
+                <div class="tails-pie pie animate pie-base" :style="tailsStyle"></div>
+                <div class="heads-pie pie animate pie-overlap" :style="headsStyle"></div>
+            </div>
                 <div class="data-overlap" id="data">
-                    <div id="headsInfo" class="percent heads">{{ headsPercent }}%</div>
-                    <div id="headsPool" class="pool heads"> {{ headsPool }}gp</div>
-                    <div id="tailsInfo" class="percent tails">{{ tailsPercent }}%</div>
-                    <div id="tailsPool" class="pool tails">{{ tailsPool }}gp</div>
+                    <div id="headsInfo" class="percent heads" :class="{ unfocused: User.bet == 'tails' }">{{ headsPercent }}%</div>
+                    <div id="headsPool" class="pool heads" :class="{ unfocused: User.bet == 'tails' }"> {{ headsPool }}gp</div>
+                    <div id="tailsInfo" class="percent tails" :class="{ unfocused: User.bet == 'heads' }">{{ tailsPercent }}%</div>
+                    <div id="tailsPool" class="pool tails" :class="{ unfocused: User.bet == 'heads' }">{{ tailsPool }}gp</div>
                 </div>
         </div>
         <div id="lower" v-show="userStore().username != ''">
@@ -168,34 +170,22 @@ onMounted(() => {
   position:absolute;
   border-radius:50%;
 }
-.pie:before {
+.heads-pie:before {
   inset:0;
   background:
-    radial-gradient(farthest-side,var(--c) 98%,#0000) top/var(--b) var(--b) no-repeat,
     conic-gradient(var(--c) calc(var(--p)*1%),#0000 0);
   -webkit-mask:radial-gradient(farthest-side,#0000 calc(99% - var(--b)),#000 calc(100% - var(--b)));
           mask:radial-gradient(farthest-side,#0000 calc(99% - var(--b)),#000 calc(100% - var(--b)));
 }
-.pie:after {
-  inset:calc(50% - var(--b)/2);
-  background:var(--c);
-  transform:rotate(calc(var(--p)*3.6deg - 90deg)) translate(calc(var(--w)/2 - 50%));
+.tails-pie:before {
+  inset:0;
+  background:
+    conic-gradient(var(--c) calc(var(--p)*1%),#0000 0);
+  -webkit-mask:radial-gradient(farthest-side,#0000 calc(99% - var(--b)),#000 calc(100% - var(--b)));
+          mask:radial-gradient(farthest-side,#0000 calc(99% - var(--b)),#000 calc(100% - var(--b)));
 }
 .animate {
   animation:p 1s .5s both;
-}
-.start-no-round:before {
-  inset:0;
-  background:
-    radial-gradient(farthest-side,var(--c) 98%,#0000) top/var(--b) var(--b) no-repeat,
-    conic-gradient(var(--c) calc(var(--p)*1%),#0000 0);
-  -webkit-mask:radial-gradient(farthest-side,#0000 calc(99% - var(--b)),#000 calc(100% - var(--b)));
-          mask:radial-gradient(farthest-side,#0000 calc(99% - var(--b)),#000 calc(100% - var(--b)));
-}
-.start-no-round:after {
-  inset:calc(50% - var(--b)/2);
-  background:var(--c);
-  transform:rotate(calc(var(--p)*3.6deg - 90deg)) translate(calc(var(--w)/2 - 50%));
 }
 @-moz-keyframes p{
   from{--p:0}
@@ -211,7 +201,7 @@ onMounted(() => {
 }
 .data-overlap {
     position:relative;
-    bottom:305px;
+    bottom:304px;
     left: 50px;
     background-color: #001d3d;
     width: 250px;
@@ -238,6 +228,12 @@ onMounted(() => {
 .tails {
     color:#dc2f91;
 }
+.heads.unfocused {
+    color:#7a661b;
+}
+.tails.unfocused {
+    color:#6b214b;
+}
 .pool.heads {
     padding-bottom: 2em;
 }
@@ -263,5 +259,16 @@ onMounted(() => {
     background-size: 100%;
     background-clip: text;
     color: transparent;
+}
+.spin {
+    animation: rotation 20s infinite linear;
+}
+@keyframes rotation {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(359deg);
+    }
 }
 </style>

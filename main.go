@@ -12,7 +12,7 @@ import (
 
 /*
 	0.0.4
-		- added rate limiting
+		- added rate limiting for http and ws
 		- added captcha for account creation
 		- added WebSocket authentication
 		- fixed BetInput bugs (NaN, decimals)

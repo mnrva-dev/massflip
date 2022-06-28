@@ -40,15 +40,45 @@ const ChatColors = {
 
 const _CHAT_MAX_HISTORY = 75;
 
-onMounted(() => {
-    let log = document.getElementById("ChatWindow")
-    function appendLog(item) {
-        var doScroll = log.scrollTop > log.scrollHeight - log.clientHeight - 1;
-        log.appendChild(item);
-        if (doScroll) {
-            log.scrollTop = log.scrollHeight - log.clientHeight;
-        }
+
+function appendLog(item) {
+    var log = document.getElementById("ChatWindow")
+    var doScroll = log.scrollTop > log.scrollHeight - log.clientHeight - 1;
+    log.appendChild(item);
+    if (doScroll) {
+        log.scrollTop = log.scrollHeight - log.clientHeight;
     }
+}
+
+function updateChat() {
+    var log = document.getElementById("ChatWindow")
+    log.innerHTML = ""
+    for (let message of Object.values(chatQueue.elements)) {
+        var item = document.createElement("div")
+        let fromUser = document.createElement("span")
+        fromUser.style = `color: ${message.color};`
+        fromUser.innerText = message.username
+        item.appendChild(fromUser)
+        if ('points' in message) {
+            let chatScore = document.createElement("span")
+            chatScore.innerText = `(${message.points})`
+            chatScore.style = `color: ${message.color};font-family: 'Helvetica';font-size: 12px;`
+            item.appendChild(chatScore)
+        }
+        let chatMsg
+        if (!('msgcolor' in message)) {
+            //message['msgcolor'] = '#f3f9f8'
+        }
+        chatMsg = document.createElement("span")
+        chatMsg.style = `color: ${message.msgcolor};`
+        chatMsg.innerText = `: ${message.message}`
+        item.appendChild(chatMsg)
+        appendLog(item)
+    }
+}
+
+onMounted(() => {
+    
     WS.addEventListener("message",  function (evt) {
         let MSGs = evt.data.split('\n')
             MSGs.forEach((i) => {
@@ -58,27 +88,22 @@ onMounted(() => {
                 if (chatQueue.length  >= _CHAT_MAX_HISTORY) {
                     chatQueue.dequeue()
                 }
-                log.innerHTML = ""
-                for (let message of Object.values(chatQueue.elements)) {
-                    var item = document.createElement("div")
-                    let fromUser = document.createElement("span")
-                    fromUser.style = `color: ${message.color};`
-                    fromUser.innerText = message.username
-                    item.appendChild(fromUser)
-                    let chatScore = document.createElement("span")
-                    chatScore.innerText = `(${message.points})`
-                    chatScore.style = `color: ${message.color};font-family: 'Helvetica';font-size: 12px;`
-                    item.appendChild(chatScore)
-                    let chatMsg = document.createTextNode(`: ${message.message}`)
-                    item.appendChild(chatMsg)
-                    appendLog(item)
-                }
+                updateChat()
+            } else if (wsMsg.type == 'chaterror') {
+                chatQueue.enqueue({
+                    username: 'Not Sent',
+                    color: '#555',
+                    message: wsMsg.error,
+                    msgcolor: '#555'
+                })
+                updateChat()
             }
         })
     })
 })
 
 function sendChat() {
+    if (chat.value == '') { return }
     if (chat.value.startsWith("/color")) {  
         let newColor = chat.value.split(" ")[1]
         if (newColor in ChatColors) {
