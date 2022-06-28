@@ -4,10 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"os"
 	"strings"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
@@ -23,7 +25,12 @@ func chatColor(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		DB = openDB()
 	}
-	userCollection := DB.Database("Users").Collection("Users")
+	var userCollection *mongo.Collection
+	if os.Getenv("ENVIRONMENT") == "production" {
+		userCollection = DB.Database("Users").Collection("Users")
+	} else {
+		userCollection = DB.Database("Development").Collection("Users")
+	}
 
 	// decode PUT into v struct
 	var v ColorRequest

@@ -22,9 +22,13 @@ function submitBet(HorT){
     if (userStore().bet != '') {
         return
     }
-    if (bet.value <= 0) {
+    if (bet.value <= 0 || isNaN(bet.value)) {
         hasError.value = true
         error.value = "Error: bet must be greater than 0"
+        return
+    } else if (bet.value % 1 != 0) {
+        hasError.value = true
+        error.value = "Error: bet must be a whole number"
         return
     }
     if (userStore().points - bet.value < 0) {

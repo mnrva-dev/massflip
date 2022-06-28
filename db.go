@@ -7,7 +7,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -15,26 +14,21 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
-var DB = openDB()
+var DB *mongo.Client
 
 func openDB() *mongo.Client {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Unable to load database. Shutting down...")
-	}
 	dbUsername := os.Getenv("DB_USERNAME")
 	dbPassword := os.Getenv("DB_PASSWORD")
 
 	serverAPIOptions := options.ServerAPI(options.ServerAPIVersion1)
 	clientOptions := options.Client().
-		ApplyURI("mongodb+srv://" + dbUsername + ":" + dbPassword + "@cluster0.tqrat.mongodb.net/myFirstDatabase?retryWrites=true&w=majority").
+		ApplyURI("mongodb+srv://" + dbUsername + ":" + dbPassword + "@cluster0.tqrat.mongodb.net/?retryWrites=true&w=majority").
 		SetServerAPIOptions(serverAPIOptions)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	client, err := mongo.Connect(ctx, clientOptions)
-	err = client.Ping(ctx, readpref.Primary())
 	if err != nil {
-		log.Fatal("DB Error: " + err.Error())
+		log.Fatal(err)
 	}
 	return client
 }
@@ -44,7 +38,13 @@ func DBSubtractPoints(user string, p int) error {
 	if err != nil {
 		DB = openDB()
 	}
-	userCollection := DB.Database("Users").Collection("Users")
+	var userCollection *mongo.Collection
+	if os.Getenv("ENVIRONMENT") == "production" {
+		userCollection = DB.Database("Users").Collection("Users")
+	} else {
+		userCollection = DB.Database("Development").Collection("Users")
+	}
+
 	var v ExistingAccount
 	err = userCollection.FindOne(context.Background(), bson.D{primitive.E{Key: "username", Value: user}}).Decode(&v)
 
@@ -67,7 +67,12 @@ func DBAddPoints(user string, p int) error {
 	if err != nil {
 		DB = openDB()
 	}
-	userCollection := DB.Database("Users").Collection("Users")
+	var userCollection *mongo.Collection
+	if os.Getenv("ENVIRONMENT") == "production" {
+		userCollection = DB.Database("Users").Collection("Users")
+	} else {
+		userCollection = DB.Database("Development").Collection("Users")
+	}
 	var v ExistingAccount
 	err = userCollection.FindOne(context.Background(), bson.D{primitive.E{Key: "username", Value: user}}).Decode(&v)
 
@@ -92,7 +97,12 @@ func DBGetUserByUsername(user string) ExistingAccount {
 	if err != nil {
 		DB = openDB()
 	}
-	userCollection := DB.Database("Users").Collection("Users")
+	var userCollection *mongo.Collection
+	if os.Getenv("ENVIRONMENT") == "production" {
+		userCollection = DB.Database("Users").Collection("Users")
+	} else {
+		userCollection = DB.Database("Development").Collection("Users")
+	}
 	var v ExistingAccount
 	err = userCollection.FindOne(context.Background(), bson.D{primitive.E{Key: "username", Value: user}}).Decode(&v)
 

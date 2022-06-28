@@ -16,8 +16,9 @@
                 </div>
                 <div id="noAcc" @click="toggleCreate">Don't have an account?</div>
             </div>
-            <button class="submit" v-show="!tCreate" @click="login">Login</button>
-            <button class="submit" v-show="tCreate" @click="createAccount">Create</button>
+            <button class="submit" v-if="!tCreate" @click="login">Login</button>
+
+            <button class="submit" v-if="tCreate" @click="createAccount">Create</button>
         </form>
         <p id="serverResponse"> {{ serverResponse }}</p>
     </div>
@@ -26,6 +27,8 @@
 
 <script setup>
 import { defineEmits, ref, reactive } from 'vue'
+import { useReCaptcha } from 'vue-recaptcha-v3'
+const { executeRecaptcha, recaptchaLoaded } = useReCaptcha()
 defineEmits(['display'])
 const form = reactive({
     username: '',
@@ -39,6 +42,11 @@ const pHasError = ref(false)
 const serverResponse = ref('')
 function toggleCreate() {
     tCreate.value = !tCreate.value
+    if (tCreate.value) {
+        document.getElementById("noAcc").innerText = "Already have an account?"
+    } else {
+        document.getElementById("noAcc").innerText = "Don't have an account?"
+    }
 }
 function loginFieldsReady() {
     let ret = true
@@ -73,13 +81,17 @@ async function createAccount(e) {
         serverResponse.value = "passwords do not match"
         return
     }
+    serverResponse.value = ""
+    await recaptchaLoaded()
+    const token = await executeRecaptcha('login')
     let req = new XMLHttpRequest()
     req.open("POST", "/api/createaccount")
     req.withCredentials = true
     req.send(JSON.stringify({
         username: form.username,
         password: form.password,
-        remember: form.remember
+        remember: form.remember,
+        token: token
     }))
     req.onreadystatechange = () => {
         if (req.readyState == XMLHttpRequest.DONE) {
@@ -104,7 +116,7 @@ function login(e) {
     req.send(JSON.stringify({
         username: form.username,
         password: form.password,
-        remember: form.remember
+        remember: form.remember,
     }))
     req.onreadystatechange = () => {
         if (req.readyState == XMLHttpRequest.DONE) {

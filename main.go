@@ -7,15 +7,26 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/joho/godotenv"
 )
 
 /*
-*	TODO:
-	  Later:
-		- user pages
-		- figure out an actual goal for the game
-*
+	0.0.4
+		- added rate limiting
+		- added captcha for account creation
+		- added WebSocket authentication
+		- fixed BetInput bugs (NaN, decimals)
+		- seperated development and production environment
+		- frontend bug fixes
 */
+
+func init() {
+	err := godotenv.Load()
+	if err != nil {
+		fmt.Println("* No .env file found")
+	}
+	DB = openDB()
+}
 
 func main() {
 
@@ -30,6 +41,8 @@ func main() {
 	// disconnect to DB on application exit
 	defer DB.Disconnect(context.Background())
 
+	// rate limiting middleware
+	r.Use(limitMiddleware)
 	// handlers
 	r.Handle("/*", http.FileServer(http.Dir("./frontend/dist")))
 	r.Get("/ws", func(w http.ResponseWriter, r *http.Request) {
@@ -42,6 +55,6 @@ func main() {
 	r.Put("/api/chatcolor", chatColor)
 
 	// run server
-	fmt.Println("* Listening on localhost:8000")
+	log.Println("* Listening on localhost:8000")
 	log.Fatal(http.ListenAndServe(":8000", r))
 }

@@ -24,8 +24,7 @@ func (h *Hub) runGameClock() {
 			msg = "{\"type\":\"flip\",\"value\":\"tails\"}"
 		}
 		h.broadcast <- []byte(msg)
-		time.Sleep(4 * time.Second)
+		time.Sleep(5 * time.Second)
 		h.broadcastPoolUpdate()
-		time.Sleep(1 * time.Second)
 	}
 }

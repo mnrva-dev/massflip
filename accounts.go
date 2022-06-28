@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
+	"os"
 	"regexp"
 	"strings"
 	"time"
@@ -13,10 +15,14 @@ import (
 	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 	"golang.org/x/crypto/bcrypt"
 )
+
+// Note: I would love to embed a lot of these structs to avoid
+//		duplicate fields, but it breaks json.(Un)marshal and I dont want to deal with that
 
 type Credentials struct {
 	Username string `json:"username" bson:"username"`
@@ -27,6 +33,13 @@ type Login struct {
 	Username   string `json:"username" bson:"username"`
 	Password   string `json:"password" bson:"password"`
 	RememberMe bool   `json:"remember"`
+}
+
+type CreateAccount struct {
+	Username   string `json:"username" bson:"username"`
+	Password   string `json:"password" bson:"password"`
+	RememberMe bool   `json:"remember"`
+	Token      string `json:"token"`
 }
 
 type Session struct {
@@ -61,13 +74,55 @@ func createAccount(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		DB = openDB()
 	}
-	userCollection := DB.Database("Users").Collection("Users")
+	var userCollection *mongo.Collection
+	if os.Getenv("ENVIRONMENT") == "production" {
+		userCollection = DB.Database("Users").Collection("Users")
+	} else {
+		userCollection = DB.Database("Development").Collection("Users")
+	}
 
 	// var v contains POST credentials
-	var v Login
+	var v CreateAccount
 	err = json.NewDecoder(r.Body).Decode(&v)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		log.Println("* Create Account Refused: Bad form data")
+		return
+	}
 
-	if err != nil || len(v.Password) < 8 || len(v.Password) > 255 || !UsernameRegex.MatchString(v.Username) {
+	var verify struct {
+		Secret   string
+		Response string
+	}
+	verify.Secret = os.Getenv("CAPTCHA_SECRET")
+	verify.Response = v.Token
+
+	//url := "https://www.google.com/recaptcha/api/siteverify?secret=" + url.QueryEscape(verify.Secret) + "?response=" + url.QueryEscape(verify.Response)
+	u := "https://www.google.com/recaptcha/api/siteverify"
+	d := url.Values{"secret": []string{verify.Secret}, "response": []string{verify.Response}}
+
+	resp, err := http.PostForm(u, d)
+
+	var captchaResponse struct {
+		Success  bool                `json:"success"`
+		Time     primitive.Timestamp `json:"challenge_ts"`
+		Hostname string              `json:"hostname"`
+		Errors   []string            `json:"error-codes"`
+	}
+
+	json.NewDecoder(resp.Body).Decode(&captchaResponse)
+
+	if !captchaResponse.Success {
+		w.WriteHeader(http.StatusBadRequest)
+		log.Print("* Create Account Refused: Unsuccessful reCaptcha challenge\nErrors: ")
+		for _, e := range captchaResponse.Errors {
+			fmt.Print(e + " ")
+		}
+		fmt.Print("\n")
+		return
+	}
+
+	if len(v.Password) < 8 || len(v.Password) > 255 || !UsernameRegex.MatchString(v.Username) {
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprint(w, "{\"error\":\"there was a problem with your request. Please try again with different values\"}")
 		return
@@ -148,7 +203,12 @@ func login(w http.ResponseWriter, r *http.Request) {
 		DB = openDB()
 	}
 	w.Header().Set("Content-Type", "application/json")
-	userCollection := DB.Database("Users").Collection("Users")
+	var userCollection *mongo.Collection
+	if os.Getenv("ENVIRONMENT") == "production" {
+		userCollection = DB.Database("Users").Collection("Users")
+	} else {
+		userCollection = DB.Database("Development").Collection("Users")
+	}
 
 	// decode POST into v struct
 	var v Login
@@ -234,7 +294,12 @@ func loginBySession(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		DB = openDB()
 	}
-	userCollection := DB.Database("Users").Collection("Users")
+	var userCollection *mongo.Collection
+	if os.Getenv("ENVIRONMENT") == "production" {
+		userCollection = DB.Database("Users").Collection("Users")
+	} else {
+		userCollection = DB.Database("Development").Collection("Users")
+	}
 
 	var id Session
 	var account ReturnedAccount
@@ -263,7 +328,12 @@ func logout(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		DB = openDB()
 	}
-	userCollection := DB.Database("Users").Collection("Users")
+	var userCollection *mongo.Collection
+	if os.Getenv("ENVIRONMENT") == "production" {
+		userCollection = DB.Database("Users").Collection("Users")
+	} else {
+		userCollection = DB.Database("Development").Collection("Users")
+	}
 
 	var v Credentials
 

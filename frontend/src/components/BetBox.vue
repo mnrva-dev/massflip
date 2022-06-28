@@ -69,6 +69,7 @@ onMounted(() => {
         if (isNaN(hP)) {
             headsPercent.value = 0
             headsStyle['--p'] = 50
+            
         } else {
             headsPercent.value = hP
             headsStyle['--p'] = headsPercent.value
@@ -83,26 +84,30 @@ onMounted(() => {
         tailsPool.value = wsMsg.tailspool
     }
     WS.addEventListener("message",  function (evt) {
-        let wsMsg = JSON.parse(evt.data)
-        if (wsMsg.type == "pool") {
-            updatePool(wsMsg)
-        } else if (wsMsg.type == "win") {
-            userStore().addPoints(wsMsg.value)
-        } else if (wsMsg.type == "tick") {
-            let time = wsMsg.clock
-            let timeString = (Math.floor(time/60)).toString() + ":" + ((time%60)>9?"":"0") + (time%60).toString() + "s"
-            clock.value = timeString
-            until.value = 'until next flip'
-            updatePool(wsMsg)
-        } else if (wsMsg.type == "flip") {
-            clock.value = wsMsg.value
-            until.value = ''
-            userStore().setBet("")
-        } else if (wsMsg.type == "hasbet") {
-            if (wsMsg.value == true) {
-                userStore().bet = wsMsg.bet
+        let MSGs = evt.data.split('\n')
+            MSGs.forEach((i) => {
+                let wsMsg = JSON.parse(i)
+            if (wsMsg.type == "pool") {
+                updatePool(wsMsg)
+            } else if (wsMsg.type == "win") {
+                userStore().addPoints(wsMsg.value)
+            } else if (wsMsg.type == "tick") {
+                let time = wsMsg.clock
+                let timeString = (Math.floor(time/60)).toString() + ":" + ((time%60)>9?"":"0") + (time%60).toString() + "s"
+                clock.value = timeString
+                until.value = 'until next flip'
+                updatePool(wsMsg)
+            } else if (wsMsg.type == "flip") {
+                clock.value = wsMsg.value
+                until.value = ''
+                userStore().setBet("")
+            } else if (wsMsg.type == "state") {
+                if (wsMsg.value == true) {
+                    userStore().bet = wsMsg.bet
+                }
             }
-        }
+        })
+        
     })
 })
 
@@ -191,6 +196,9 @@ onMounted(() => {
   inset:calc(50% - var(--b)/2);
   background:var(--c);
   transform:rotate(calc(var(--p)*3.6deg - 90deg)) translate(calc(var(--w)/2 - 50%));
+}
+@-moz-keyframes p{
+  from{--p:0}
 }
 @keyframes p{
   from{--p:0}

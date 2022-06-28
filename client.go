@@ -47,6 +47,14 @@ type Client struct {
 	send chan []byte
 
 	username string
+
+	auth bool
+}
+
+type Auth struct {
+	Type     string `json:"type"`
+	Username string `json:"username"`
+	Key      string `json:"key"`
 }
 
 // readPump pumps messages from the websocket connection to the hub.
@@ -70,18 +78,28 @@ func (c *Client) readPump() {
 			}
 			break
 		}
-		var v WsBetMessage
+		var v Auth
 		err = json.Unmarshal(message, &v)
 		if err == nil {
-			if v.Type == "bind" {
+			// check for authorization messages
+			if v.Type == "auth" {
+				// bind the WS client to the username (useful)
 				c.username = strings.ToLower(v.Username)
+				// if auth key matches session, they are authorized to bet/chat etc
+				if DBGetUserByUsername(c.username).Session == v.Key {
+					c.auth = true
+				}
+				// if the user has bet (and then reloaded the page) send them their state
 				if c.hub.allUsers[c.username] != "" {
-					c.send <- []byte("{\"type\":\"hasbet\",\"value\":true,\"bet\":\"" + c.hub.allUsers[c.username] + "\"}")
+					c.send <- []byte("{\"type\":\"state\",\"value\":true,\"bet\":\"" + c.hub.allUsers[c.username] + "\"}")
 				}
 				continue
 			}
 		}
-		c.hub.broadcast <- message
+		// only authorized clients are allowed to push to the Hub
+		if c.auth {
+			c.hub.broadcast <- message
+		}
 	}
 }
 

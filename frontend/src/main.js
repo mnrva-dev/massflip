@@ -2,10 +2,11 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import App from './App.vue'
 import VueGtag from "vue-gtag";
+import { VueReCaptcha } from 'vue-recaptcha-v3';
 
 // switch these in production
 export const WS = new WebSocket("wss://" + "massflip.mnrva.dev" + "/ws")
-//export const WS = new WebSocket("ws://" + "127.0.0.1:8000" + "/ws")
+//export const WS = new WebSocket("ws://" + "localhost:8000" + "/ws")
 
 WS.onclose = function() {
   alert("WebSocket connection closed.")
@@ -65,5 +66,8 @@ const pinia = createPinia()
 var app = createApp(App)
 app.use(pinia)
 app.use(VueGtag, {config: { id: "G-C3WQH98SZB" }})
+app.use(VueReCaptcha, { siteKey: '6LeDtKUgAAAAAH0OVNYPyxE8-k9EtjeSDW5jamle' }) // prod
+//app.use(VueReCaptcha, { siteKey: '6LfD6qUgAAAAAHCKSiEW1fuyuCJiZrAPya26Ro8Z' }) // dev
+
 app.mount('#app')
 

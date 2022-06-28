@@ -1,5 +1,5 @@
 <template>
-    <p>Massflip v0.0.3 - Copyright 2022 MNRVA</p>
+    <p>Massflip v0.0.4 - Copyright 2022 MNRVA</p>
 </template>
 
 <script setup>

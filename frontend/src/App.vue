@@ -28,7 +28,7 @@ onMounted(() => {
     let id = jar["session"]
     // handle logged in user
     let req = new XMLHttpRequest
-    req.open("POST", "/api/login/bysession")
+    req.open('POST', '/api/login/bysession')
     req.send(JSON.stringify({
       session: id
     }))
@@ -36,14 +36,16 @@ onMounted(() => {
         if (req.readyState == XMLHttpRequest.DONE) {
             let usr = JSON.parse(req.responseText)
             if ("error" in usr) {
-              document.cookie = "session=; Max-Age=-99999999"
-              console.log(usr["error"])
+              document.cookie = 'session=; Max-Age=-99999999'
+              console.log(usr['error'])
               return
             }
             userStore().updateUser(usr)
+            let jar = cookiesToObj(cookieStr)
             let msg = JSON.stringify({
-              type: "bind",
-              username: usr.username
+              type: "auth",
+              username: usr.username,
+              key: jar['session']
             })
             WSSend(msg)
         }

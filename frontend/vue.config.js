@@ -6,11 +6,11 @@ module.exports = defineConfig({
 module.exports = {
   devServer: {
     host: "localhost",
+    port: 8000,
     proxy: {
       "/": {
         target: "http://localhost:8000",
-        secure: false,
-        ws: true
+        secure: false
       }
     }
   }

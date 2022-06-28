@@ -31,10 +31,11 @@ const ChatColors = {
     green: "limegreen",
     yellow: "gold",
     cyan: "cyan",
-    red: "firebrick",
+    red: "crimson",
     pink: "fuchsia",
     violet: "violet",
     orange: "orange",
+    blue: "cornflowerblue"
 }
 
 const _CHAT_MAX_HISTORY = 75;
@@ -49,28 +50,31 @@ onMounted(() => {
         }
     }
     WS.addEventListener("message",  function (evt) {
-        let wsMsg = JSON.parse(evt.data)
-        if (wsMsg.type == "chat") {
-            chatQueue.enqueue(wsMsg)
-            if (chatQueue.length  >= _CHAT_MAX_HISTORY) {
-                chatQueue.dequeue()
+        let MSGs = evt.data.split('\n')
+            MSGs.forEach((i) => {
+                let wsMsg = JSON.parse(i)
+            if (wsMsg.type == "chat") {
+                chatQueue.enqueue(wsMsg)
+                if (chatQueue.length  >= _CHAT_MAX_HISTORY) {
+                    chatQueue.dequeue()
+                }
+                log.innerHTML = ""
+                for (let message of Object.values(chatQueue.elements)) {
+                    var item = document.createElement("div")
+                    let fromUser = document.createElement("span")
+                    fromUser.style = `color: ${message.color};`
+                    fromUser.innerText = message.username
+                    item.appendChild(fromUser)
+                    let chatScore = document.createElement("span")
+                    chatScore.innerText = `(${message.points})`
+                    chatScore.style = `color: ${message.color};font-family: 'Helvetica';font-size: 12px;`
+                    item.appendChild(chatScore)
+                    let chatMsg = document.createTextNode(`: ${message.message}`)
+                    item.appendChild(chatMsg)
+                    appendLog(item)
+                }
             }
-            log.innerHTML = ""
-            for (let message of Object.values(chatQueue.elements)) {
-                var item = document.createElement("div")
-                let fromUser = document.createElement("span")
-                fromUser.style = `color: ${message.color};`
-                fromUser.innerText = message.username
-                item.appendChild(fromUser)
-                let chatScore = document.createElement("span")
-                chatScore.innerText = `(${message.points})`
-                chatScore.style = `color: ${message.color};font-family: 'Helvetica';font-size: 12px;`
-                item.appendChild(chatScore)
-                let chatMsg = document.createTextNode(`: ${message.message}`)
-                item.appendChild(chatMsg)
-                appendLog(item)
-            }
-        }
+        })
     })
 })
 
